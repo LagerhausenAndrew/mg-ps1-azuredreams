@@ -1,0 +1,9 @@
+*.sln~
+*.orig
+bin/
+*.config~
+**/obj/**
+*.suo
+*.user
+*.ipch
+*.sdf
