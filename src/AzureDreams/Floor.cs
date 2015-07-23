@@ -23,6 +23,15 @@ namespace AzureDreams
     private readonly List<Room> rooms = new List<Room>();
     private readonly List<Spider> spiders = new List<Spider>();
 
+    public IEnumerable<Cell> Cells
+    {
+      get
+      {
+        foreach (var kvp in dungeon)
+          yield return kvp.Value;
+      }
+    }
+
     public Floor(int rows, int columns, int preferredRoomCount = 10)
     {
       mRows = rows;
