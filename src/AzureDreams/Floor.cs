@@ -32,7 +32,7 @@ namespace AzureDreams
       }
     }
 
-    public Floor(int rows, int columns, int preferredRoomCount = 10)
+    public Floor(int rows = 10, int columns = 10, int preferredRoomCount = 10)
     {
       mRows = rows;
       mColumns = columns;
@@ -42,7 +42,7 @@ namespace AzureDreams
       Generate();
     }
 
-    private void Generate()
+    public void Generate()
     {
       Init();
       while (RunOnce()) ;
