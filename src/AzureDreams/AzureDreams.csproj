@@ -39,17 +39,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cell.cs" />
-    <Compile Include="CellProperty.cs" />
-    <Compile Include="CellType.cs" />
-    <Compile Include="Direction.cs" />
-    <Compile Include="Floor.cs" />
-    <Compile Include="InternalExtensions.cs" />
+    <Compile Include="Dungeon.cs" />
+    <Compile Include="Grid\Cell.cs" />
+    <Compile Include="Grid\CellType.cs" />
+    <Compile Include="Data\Direction.cs" />
+    <Compile Include="Data\Floor.cs" />
+    <Compile Include="Extensions\Extensions.cs" />
+    <Compile Include="IDungeonItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Room.cs" />
-    <Compile Include="RoomBounds.cs" />
-    <Compile Include="Spider.cs" />
-    <Compile Include="SpiderState.cs" />
+    <Compile Include="Data\RoomBounds.cs" />
+    <Compile Include="Data\Spider.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

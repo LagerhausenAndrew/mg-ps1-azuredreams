@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace AzureDreams
 {
-  public class Cell : IEquatable<Cell>
+  public class Cell : IEquatable<Cell>, IDungeonItem
   {
     public static int GetHashCode(int row, int column)
     {
       unchecked
       {
-        return ((row << 16) | column);
+        return ((column & 0xffff) | (row << 16));
       }
     }
 
@@ -26,7 +26,7 @@ namespace AzureDreams
     public int Key { get { return mKey; } }
 
     public CellType Type { get; set; }
-    public CellProperty Properties { get; set; }
+    public bool IsCorner { get; set; }
 
     public Cell(int row, int column)
     {

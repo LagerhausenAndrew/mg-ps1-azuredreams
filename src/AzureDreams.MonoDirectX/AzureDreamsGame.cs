@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -21,10 +22,20 @@ namespace AzureDreams.MonoDirectX
 
     Floor generator;
 
+    bool done = false;
+    IEnumerator<bool> iter;
+    double totalElapsedTime = 0;
+
     public AzureDreamsGame()
     {
       graphics = new GraphicsDeviceManager(this);
       Content.RootDirectory = "Content";
+    }
+
+    private void ResetGenerator()
+    {
+      iter = generator.Generate().GetEnumerator();
+      done = false;
     }
 
     /// <summary>
@@ -36,6 +47,7 @@ namespace AzureDreams.MonoDirectX
     protected override void Initialize()
     {
       generator = new Floor();
+      ResetGenerator();
       base.Initialize();
     }
 
@@ -76,7 +88,17 @@ namespace AzureDreams.MonoDirectX
       KeyboardState currentKeyboard = Keyboard.GetState();
       if (currentKeyboard.IsKeyDown(Keys.Tab) && lastKeyboard.IsKeyUp(Keys.Tab))
       {
-        generator.Generate();
+        ResetGenerator();
+      }
+
+      totalElapsedTime += gameTime.ElapsedGameTime.TotalMilliseconds;
+      if (totalElapsedTime >= 100)
+      {
+        totalElapsedTime -= 100;
+        if (!done)
+        {
+          done = !iter.MoveNext();
+        }
       }
 
       cameras[currentCameraIndex].Update(gameTime);
@@ -100,7 +122,7 @@ namespace AzureDreams.MonoDirectX
         switch (cell.Type)
         {
           case CellType.Room: { color = Color.Yellow; break; }
-          case CellType.Exit: { color = Color.Red; break; }
+          case CellType.Door: { color = Color.Red; break; }
           case CellType.Wall: { color = Color.Lerp(Color.Yellow, Color.Black, 0.5f); break; }
         }
 

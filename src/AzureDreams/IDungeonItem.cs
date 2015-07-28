@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace AzureDreams
 {
-  public enum Direction
+  public interface IDungeonItem
   {
-    North,
-    South,
-    West,
-    East,
+    int Column { get; }
+    int Row { get; }
   }
 }

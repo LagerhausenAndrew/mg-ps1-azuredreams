@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace AzureDreams
 {
-  public enum SpiderState
+  public enum CellType
   {
-    CreateRoom,
-    Move,
+    Floor,
+    Room,
+    Door,
+    Wall,
   }
 }
