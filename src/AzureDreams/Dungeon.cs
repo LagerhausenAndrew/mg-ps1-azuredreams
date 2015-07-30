@@ -45,5 +45,15 @@ namespace AzureDreams
       var key = Tuple.Create(row, column);
       return cells.TryGetValue(key, out cell);
     }
+
+    public void Clear()
+    {
+      cells.Clear();
+    }
+
+    public bool Exists(int row, int column)
+    {
+      return cells.ContainsKey(Tuple.Create(row, column));
+    }
   }
 }

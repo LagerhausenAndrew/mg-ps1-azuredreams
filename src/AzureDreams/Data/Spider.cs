@@ -13,6 +13,7 @@ namespace AzureDreams
     public Direction StartDirection { get; set; }
     public double Moves { get; set; }
     public bool Dead { get; set; }
+    public bool Zombie { get; set; }
 
     public int Key
     {

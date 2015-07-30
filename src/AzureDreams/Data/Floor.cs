@@ -11,8 +11,11 @@ namespace AzureDreams
   {
     const double SpiderSpawnPC = 1.65;
     const double SpiderTurnPC = 0.10;
-    const double SpiderMovesLen = 32.0;
-    const double MaxSpiderLifespan = 128;
+    const double SpiderZombieTurnPC = 0.75;
+    const double SpiderMovesLen = 12.0;
+    const double MaxSpiderLifespan = 256;
+
+    const int RoomAttemtps = 8;
 
     const int MaxRoomRows = 16;
     const int MaxRoomColumns = 16;
@@ -55,6 +58,9 @@ namespace AzureDreams
 
     public IEnumerable<bool> Generate()
     {
+      // reset the dungeon
+      dungeon.Clear();
+
       // create a starting room with random bounds
       var rooms = new List<RoomBounds>();
       var start = CreateRoom();
@@ -62,7 +68,7 @@ namespace AzureDreams
 
       // add spiders for the room
       var spiders = new List<Spider>();
-      SpawnSpiders(start, spiders);
+      SpawnSpiders(start, rooms, spiders);
 
       // go through and move the spiders
       while (spiders.Count > 0)
@@ -81,48 +87,61 @@ namespace AzureDreams
           if (spider.Moves >= MaxSpiderLifespan)
           {
             spider.Dead = true;
-            continue;
           }
-
-          // now that the spider has moved, we need to get the cell that is
-          // occupied by this space. 
-          // * If the cell is a room wall, then we need to knock down the wall, and kill the spider. We do not spawn more spiders in this case
-          // * If the cell is a regular cell, then we need to kill the spider. We do not spawn any more spiders in this case.
-          // * If the cell is not occupied, we need to turn (rarely), do nothing, or create a room (based on number of moves)
-
-          Cell cell;
-          if (!dungeon.TryGetValue(spider, out cell))
+          else
           {
-            // we need to decide on our next course of action. The first action we consider is creating a room.
-            // We will create room based on the number of moves we've had
-            double pc = spider.Moves / SpiderMovesLen;
-            if (random.NextDouble() < pc)
+            // now that the spider has moved, we need to get the cell that is
+            // occupied by this space. 
+            // * If the cell is a room wall, then we need to knock down the wall, and kill the spider. We do not spawn more spiders in this case
+            // * If the cell is a regular cell, then we need to kill the spider. We do not spawn any more spiders in this case.
+            // * If the cell is not occupied, we need to turn (rarely), do nothing, or create a room (based on number of moves)
+
+            Cell cell;
+            if (!dungeon.TryGetValue(spider, out cell))
             {
-              DoGenerateRoom(spider, spiders, rooms);
-              if (!spider.Dead)
+              // if this is a zombie spider, then reset the moves
+              if (spider.Zombie)
+              {
+                spider.Moves = 0;
+              }
+
+              // we need to decide on our next course of action. The first action we consider is creating a room.
+              // We will create room based on the number of moves we've had
+              double pc = (spider.Moves / SpiderMovesLen) * random.NextDouble();
+              if (pc > 0.75)
+              {
+                DoGenerateRoom(spider, spiders, rooms);
+                if (!spider.Dead)
+                {
+                  spider.Zombie = (rooms.Count == roomCount);
+                  SpawnFloor(spider);
+                }
+              }
+              else
               {
                 SpawnFloor(spider);
+
+                // create a variable to hold the turn percentage
+                pc = spider.Zombie
+                  ? SpiderZombieTurnPC
+                  : SpiderTurnPC;
+
+                // we decided not to create a room. There is a x% chance that we change directions
+                if (random.NextDouble() < pc)
+                {
+                  DoTurnSpider(spider);
+                }
               }
             }
             else
             {
-              SpawnFloor(spider);
-
-              // we decided not to create a room. There is a x% chance that we change directions
-              if (random.NextDouble() < SpiderTurnPC)
+              // this is not a free cell. If it's a wall, then attempt to knock it down
+              if (cell.Type == CellType.Wall && !cell.IsCorner)
               {
-                DoTurnSpider(spider);
+                cell.Type = CellType.Door;
               }
+              spider.Dead = true;
             }
-          }
-          else
-          {
-            // this is not a free cell. If it's a wall, then attempt to knock it down
-            if (cell.Type == CellType.Wall && !cell.IsCorner)
-            {
-              cell.Type = CellType.Door;
-            }
-            spider.Dead = true;
           }
         }
 
@@ -161,7 +180,7 @@ namespace AzureDreams
         rooms.Add(room);
 
         // spawn spiders for the room
-        SpawnSpiders(room, spiders);
+        SpawnSpiders(room, rooms, spiders);
 
         // kill this spider
         spider.Dead = true;
@@ -181,8 +200,14 @@ namespace AzureDreams
       spider.Moves++;
     }
 
-    private void SpawnSpiders(RoomBounds room, List<Spider> spiders)
+    private void SpawnSpiders(RoomBounds room, List<RoomBounds> rooms, List<Spider> spiders)
     {
+      int count = rooms.Count;
+      if (count >= roomCount)
+      {
+        return;
+      }
+
       var shuffled = Enum
         .GetValues(typeof(Direction))
         .Cast<Direction>()
@@ -192,6 +217,11 @@ namespace AzureDreams
       foreach (var direction in shuffled)
       {
         spiders.Add(CreateSpider(room, direction));
+        ++count;
+        if (count >= roomCount)
+        {
+          break;
+        }
 
         pc = pc / 2;
         if (pc <= random.NextDouble())
@@ -265,10 +295,10 @@ namespace AzureDreams
       {
         bounds = new RoomBounds
         {
-          Row = 0,
-          Column = 0,
-          Rows = RandRows(),
-          Columns = RandColumns(),
+          Left = 0,
+          Top = 0,
+          Bottom = RandRows(),
+          Right = RandColumns(),
         };
       }
       else
@@ -276,13 +306,9 @@ namespace AzureDreams
         bounds = GenerateRandomBounds(spider);
       }
 
-      if (bounds.Columns > 1 && bounds.Rows > 1)
+      if (bounds != null)
       {
         SpawnRoom(bounds, spider);
-      }
-      else
-      {
-        bounds = null;
       }
 
       return bounds;
@@ -290,35 +316,32 @@ namespace AzureDreams
 
     private void SpawnRoom(RoomBounds bounds, Spider spider)
     {
-      int r, c, rows, columns;
-      for (r = bounds.Row, rows = 0; rows < bounds.Rows; ++r, ++rows)
-      {
-        for (c = bounds.Column, columns = 0; columns < bounds.Columns; ++c, ++columns)
-        {
-          Cell cell;
-          if (!dungeon.TryGetValue(r, c, out cell))
-          {
-            cell = new Cell(r, c);
-            dungeon[r, c] = cell;
-          }
+      int r, c, endRow, endColumn, dr, dc;
+      endRow = bounds.Bottom;
+      endColumn = bounds.Right;
 
-          if (c == bounds.Column || columns == bounds.Columns - 1)
+      dr = Math.Sign(endRow - bounds.Top);
+      dc = Math.Sign(endColumn - bounds.Left);
+
+      for (r = bounds.Top; !r.CompareTo(endRow).Equals(dr); r += dr)
+      {
+        bool vertWall = (r == bounds.Top || r == endRow);
+        for (c = bounds.Left; !c.CompareTo(endColumn).Equals(dc); c += dc)
+        {
+          bool horzWall = (c == bounds.Left || c == endColumn);
+          Cell cell = new Cell(r, c);
+          cell.Type = CellType.Room;
+          if (horzWall)
           {
-            // we're on the left or right edge
             cell.Type = CellType.Wall;
-            cell.IsCorner = (r == bounds.Row || rows == bounds.Rows - 1);
+            cell.IsCorner = vertWall;
           }
-          else if (r == bounds.Row || rows == bounds.Rows - 1)
+          else if (vertWall)
           {
-            // we're on the top or bottom edge
             cell.Type = CellType.Wall;
-            cell.IsCorner = (c == bounds.Column || columns == bounds.Columns - 1);
+            cell.IsCorner = horzWall;
           }
-          else
-          {
-            cell.Type = CellType.Room;
-            cell.IsCorner = false;
-          }
+          dungeon[cell] = cell;
         }
       }
 
@@ -330,59 +353,94 @@ namespace AzureDreams
 
     private RoomBounds GenerateRandomBounds(Spider spider)
     {
-      RoomBounds bounds = new RoomBounds();
+      int rows, columns,
+        left, right, top, bottom,
+        dx, dy, y, x;
 
-      int r, c, rows, columns;
-      for (int i = 0; i < 5; ++i)
+      for (int i = 0; i < RoomAttemtps; ++i)
       {
+        // get the dimensions of the room
         columns = RandColumns();
         rows = RandRows();
+        CalculateBounds(spider, rows, columns, out left, out right, out top, out bottom);
 
-        switch (spider.Direction)
-        {
-          case Direction.East:
-            {
-              bounds.Row = spider.Row - rows;
-              bounds.Column = spider.Column;
-              break;
-            }
-          case Direction.South:
-            {
-              bounds.Row = spider.Row;
-              bounds.Column = spider.Column - columns;
-              break;
-            }
-          case Direction.West:
-          case Direction.North:
-            {
-              bounds.Row = spider.Row - rows;
-              bounds.Column = spider.Column - columns;
-              break;
-            }
-        }
-
-        columns *= 2;
-        rows *= 2;
+        dx = Math.Sign(right - left);
+        dy = Math.Sign(bottom - top);
 
         bool all = true;
-        for (r = 0; all && r < rows; ++r)
+        for (y = top; all && !y.CompareTo(bottom).Equals(dy); y += dy)
         {
-          for (c = 0; all && c < columns; ++c)
+          for (x = left; all && !x.CompareTo(right).Equals(dx); x += dx)
           {
-            Cell cell;
-            all &= !dungeon.TryGetValue(r + bounds.Row, c + bounds.Column, out cell);
+            all &= !dungeon.Exists(y, x);
           }
         }
 
         if (all)
         {
-          bounds.Rows = rows;
-          bounds.Columns = columns;
-          break;
+          return new RoomBounds
+          {
+            Bottom = bottom,
+            Left = left,
+            Right = right,
+            Top = top,
+          };
         }
       }
 
-      return bounds;
+      return null;
+    }
+
+    private void CalculateBounds(Spider spider, int rows, int columns, out int left, out int right, out int top, out int bottom)
+    {
+      left = right = top = bottom = 0;
+
+      var direction = spider.Direction;
+      switch (direction)
+      {
+        case Direction.West:
+        case Direction.East:
+          {
+            if (direction == Direction.East)
+            {
+              // we're on the west wall of the room
+              left = spider.Column;
+              right = left + (columns * 2);
+            }
+            else
+            {
+              // we're on the easy wall of the room
+              right = spider.Column;
+              left = right - (columns * 2);
+            }
+
+            // no matter what, we're always on the same vertical
+            top = spider.Row - rows;
+            bottom = top + (rows * 2);
+            break;
+          }
+        case Direction.North:
+        case Direction.South:
+          {
+            if (direction == Direction.South)
+            {
+              // we're on the north wall of the room
+              top = spider.Row;
+              bottom = top + (rows * 2);
+            }
+            else
+            {
+              // we're on the south wall of the room
+              bottom = spider.Row;
+              top = bottom - (rows * 2);
+            }
+
+            // no matter what, we're always on the same horizontal
+            left = spider.Column - columns;
+            right = left + (columns * 2);
+            break;
+          }
+      }
     }
 
     private int RandColumns()

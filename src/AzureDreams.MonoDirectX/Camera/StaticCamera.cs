@@ -12,9 +12,9 @@ public sealed class StaticCamera : ICamera
     set
     {
       this.zoom = value;
-      if (this.zoom < 0.1f)
+      if (this.zoom < 0.01f)
       {
-        this.zoom = 0.1f;
+        this.zoom = 0.01f;
       }
     }
   }
