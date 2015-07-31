@@ -35,10 +35,15 @@ public sealed class StaticCamera : ICamera
 
   public StaticCamera(Viewport viewport)
   {
+    Reset();
+    this.viewport = viewport;
+  }
+
+  private void Reset()
+  {
     this.zoom = 1f;
     this.Rotation = 0f;
     this.Position = Vector2.Zero;
-    this.viewport = viewport;
   }
 
   public void Update(GameTime gameTime)
@@ -70,6 +75,11 @@ public sealed class StaticCamera : ICamera
     if (inputs.IsZoomOut())
     {
       this.Zoom -= time;
+    }
+    if (inputs.IsCameraReset())
+    {
+      Reset();
+      movement = Vector2.Zero;
     }
     this.Move(movement);
   }

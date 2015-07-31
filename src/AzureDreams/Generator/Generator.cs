@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AzureDreams
 {
-  public class Floor
+  public class Generator
   {
     const double SpiderSpawnPC = 1.65;
     const double SpiderTurnPC = 0.10;
@@ -26,7 +26,7 @@ namespace AzureDreams
     static readonly Dictionary<Direction, Direction> sOpposite;
     static readonly LinkedList<Direction> sLoop = new LinkedList<Direction>();
 
-    static Floor()
+    static Generator()
     {
       sOpposite = new Dictionary<Direction, Direction>();
       sOpposite[Direction.East] = Direction.West;
@@ -49,7 +49,7 @@ namespace AzureDreams
       get { return dungeon.Cells; }
     }
 
-    public Floor(int roomCount = 10)
+    public Generator(int roomCount = 10)
     {
       this.roomCount = roomCount;
       random = new Random(Environment.TickCount);

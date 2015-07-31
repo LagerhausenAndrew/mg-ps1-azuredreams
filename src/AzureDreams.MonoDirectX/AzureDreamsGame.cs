@@ -20,7 +20,7 @@ namespace AzureDreams.MonoDirectX
     ICamera[] cameras;
     int currentCameraIndex;
 
-    Floor generator;
+    Generator generator;
 
     bool done = false;
     IEnumerator<bool> iter;
@@ -46,7 +46,7 @@ namespace AzureDreams.MonoDirectX
     /// </summary>
     protected override void Initialize()
     {
-      generator = new Floor(26);
+      generator = new Generator(26);
       ResetGenerator();
       base.Initialize();
     }

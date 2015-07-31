@@ -8,12 +8,17 @@ namespace AzureDreams
 {
   public class Dungeon
   {
+    static Tuple<int, int> key(int row, int column)
+    {
+      return Tuple.Create(row, column);
+    }
+
     private readonly Dictionary<Tuple<int, int>, Cell> cells = new Dictionary<Tuple<int, int>, Cell>();
 
     public Cell this[int row, int column]
     {
-      get { return cells[Tuple.Create(row, column)]; }
-      set { cells[Tuple.Create(row, column)] = value; }
+      get { return cells[key(row, column)]; }
+      set { cells[key(row, column)] = value; }
     }
 
     public Cell this[IDungeonItem item]
@@ -42,8 +47,7 @@ namespace AzureDreams
 
     public bool TryGetValue(int row, int column, out Cell cell)
     {
-      var key = Tuple.Create(row, column);
-      return cells.TryGetValue(key, out cell);
+      return cells.TryGetValue(key(row, column), out cell);
     }
 
     public void Clear()
@@ -53,7 +57,7 @@ namespace AzureDreams
 
     public bool Exists(int row, int column)
     {
-      return cells.ContainsKey(Tuple.Create(row, column));
+      return cells.ContainsKey(key(row, column));
     }
   }
 }
