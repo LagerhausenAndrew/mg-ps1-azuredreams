@@ -40,12 +40,17 @@ namespace AzureDreams
       cells = new Dictionary<Tuple<int, int>, Cell>();
     }
 
-    public bool TryGetValue(IDungeonItem item, out Cell cell)
+    public void Add(Cell cell)
     {
-      return TryGetValue(item.Row, item.Column, out cell);
+      cells.Add(key(cell.Row, cell.Column), cell);
     }
 
-    public bool TryGetValue(int row, int column, out Cell cell)
+    public bool TryGetCell(IDungeonItem item, out Cell cell)
+    {
+      return TryGetCell(item.Row, item.Column, out cell);
+    }
+
+    public bool TryGetCell(int row, int column, out Cell cell)
     {
       return cells.TryGetValue(key(row, column), out cell);
     }
@@ -58,6 +63,11 @@ namespace AzureDreams
     public bool Exists(int row, int column)
     {
       return cells.ContainsKey(key(row, column));
+    }
+
+    public bool Exists(IDungeonItem item)
+    {
+      return Exists(item.Row, item.Column);
     }
   }
 }

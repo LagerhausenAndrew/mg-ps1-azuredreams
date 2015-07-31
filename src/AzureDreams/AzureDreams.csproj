@@ -39,16 +39,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Dungeon.cs" />
+    <Compile Include="Generator\Dungeon.cs" />
+    <Compile Include="Generator\Index.cs" />
     <Compile Include="Grid\Cell.cs" />
     <Compile Include="Grid\CellType.cs" />
-    <Compile Include="Data\Direction.cs" />
-    <Compile Include="Data\Floor.cs" />
+    <Compile Include="Generator\Direction.cs" />
+    <Compile Include="Generator\Generator.cs" />
     <Compile Include="Extensions\Extensions.cs" />
-    <Compile Include="IDungeonItem.cs" />
+    <Compile Include="Generator\IDungeonItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Data\RoomBounds.cs" />
-    <Compile Include="Data\Spider.cs" />
+    <Compile Include="Generator\RoomBounds.cs" />
+    <Compile Include="Generator\Spider.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
