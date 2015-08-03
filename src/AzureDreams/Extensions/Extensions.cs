@@ -8,6 +8,19 @@ namespace AzureDreams
 {
   internal static class Extensions
   {
+    public static T Fetch<T>(this IList<T> list, Random random)
+    {
+      int index = random.Next(list.Count);
+      return list.PopAt(index);
+    }
+
+    public static T PopAt<T>(this IList<T> list, int index)
+    {
+      T value = list[index];
+      list.RemoveAt(index);
+      return value;
+    }
+
     public static bool Any(this int value, params int[] values)
     {
       return values.Any(v => (v == value));

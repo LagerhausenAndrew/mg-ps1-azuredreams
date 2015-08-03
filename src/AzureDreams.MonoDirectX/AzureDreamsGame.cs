@@ -46,7 +46,7 @@ namespace AzureDreams.MonoDirectX
     /// </summary>
     protected override void Initialize()
     {
-      generator = new Generator(26);
+      generator = new Generator(10);
       ResetGenerator();
       base.Initialize();
     }

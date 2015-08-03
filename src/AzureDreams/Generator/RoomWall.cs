@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace AzureDreams
 {
-  public class Spider
+  public enum RoomWall
   {
-    public bool Dead { get; set; }
-    public Stack<Index> Path { get; set; }
+    Left,
+    Top,
+    Right,
+    Bottom,
   }
 }
