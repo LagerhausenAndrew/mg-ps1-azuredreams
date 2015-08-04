@@ -60,18 +60,18 @@ namespace AzureDreams
       
       var openset = new List<Node> { startNode };
       startNode.g = 0;
-      startNode.f = startNode.g + cost(startNode, goalNode);
+      startNode.f = moves(startNode, goalNode);
 
       while (openset.Count > 0)
       {
         var current = openset.PopAt(0);
-        if (current == goalNode)
+        if (current.Equals(goalNode))
         {
           return reconstruct(current);
         }
 
         current.visited = true;
-        foreach (var neighbor in GetNeighbors(current))
+        foreach (var neighbor in GetNeighbors(current, goal))
         {
           if (!neighbor.visited)
           {
@@ -81,7 +81,7 @@ namespace AzureDreams
             {
               neighbor.parent = current;
               neighbor.g = g;
-              neighbor.f = g + cost(neighbor, goalNode);
+              neighbor.f = g + moves(neighbor, goalNode);
               if (!contains)
               {
                 Insert(neighbor, openset);
@@ -104,7 +104,7 @@ namespace AzureDreams
       nodes.Insert(index, node);
     }
 
-    private IEnumerable<Node> GetNeighbors(Node node)
+    private IEnumerable<Node> GetNeighbors(Node node, Index goal)
     {
       int[][] dirs = new int[4][]
       {
@@ -121,7 +121,7 @@ namespace AzureDreams
         if (environment.TryGetValue(index, out neighbor))
         {
           Cell cell;
-          if (!dungeon.TryGetCell(index, out cell) || cell.Type == CellType.Floor)
+          if (index.Equals(goal) || !dungeon.TryGetCell(index, out cell) || cell.Type == CellType.Floor)
           {
             yield return neighbor;
           }
@@ -143,10 +143,12 @@ namespace AzureDreams
 
     private double cost(Node a, Node b)
     {
-      double dr, dc;
-      dr = (b.Row - a.Row);
-      dc = (b.Column - a.Column);
-      return (dr * dr) + (dc * dc);
+      return 1.41421356237;
+    }
+
+    private double moves(Node start, Node goal)
+    {
+      return Math.Abs(goal.Row - start.Row) + Math.Abs(goal.Column - start.Column);
     }
 
     private void Reset()
