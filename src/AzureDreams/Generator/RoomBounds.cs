@@ -44,5 +44,21 @@ namespace AzureDreams
         }
       }
     }
+
+    public RoomBounds Move(int dx, int dy)
+    {
+      return new RoomBounds
+      {
+        Bottom = Bottom + dy,
+        Left = Left + dx,
+        Right = Right + dx,
+        Top = Top + dy,
+      };
+    }
+
+    public bool IntersectsWith(RoomBounds other)
+    {
+      return (other.Left < Right) && (Left < other.Right) && (other.Top < Bottom) && (Top < other.Bottom);
+    }
   }
 }

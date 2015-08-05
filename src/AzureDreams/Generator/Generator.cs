@@ -15,8 +15,8 @@ namespace AzureDreams
     const int MinRoomRows = 4;
     const int MinRoomColumns = 4;
 
-    const int MinRoomDistance = 9;
-    const int MaxRoomDistance = 99;
+    const int MinRoomDistance = 4;
+    const int MaxRoomDistance = 16;
 
     static readonly Dictionary<Direction, Direction> sOpposite;
     static readonly LinkedList<Direction> sLoop = new LinkedList<Direction>();
@@ -77,7 +77,7 @@ namespace AzureDreams
           var source = rooms[random.Next(rooms.Count)];
           moved = MoveAwayFrom(source);
         }
-        while (moved.Indices.Any(dungeon.Exists));
+        while (moved.Indices.Any(dungeon.Exists) || IsTooClose(moved, rooms));
 
         // we know all the cells are free!
         rooms.Add(moved);
@@ -99,11 +99,25 @@ namespace AzureDreams
       {
         // choose two random rooms and assign a spider to connect their walls
         var pool = rooms.Where(r => r.Walls.Count > 0).ToList();
+        if (pool.Count == 1)
+        {
+          break;
+        }
+
         var room1 = pool.Fetch(random);
         var room2 = pool.Fetch(random);
         var room1Wall = room1.Walls.Fetch(random);
         var room2Wall = room2.Walls.Fetch(random);
-        AddSpider(spiders, room1, room1Wall, room2, room2Wall, pathfinder);
+        
+        // if we weren't able to add spiders, then add back the rooms and walls
+        var succeeded = AddSpider(spiders, room1, room1Wall, room2, room2Wall, pathfinder);
+        if (!succeeded)
+        {
+          room1.Walls.Add(room1Wall);
+          room2.Walls.Add(room2Wall);
+          pool.Add(room1);
+          pool.Add(room2);
+        }
 
         // if there are still rooms that haven't been assigned, we must continue this process
         if (!alwaysCalculateProbability && rooms.Any(r => r.Walls.Count == 4))
@@ -128,7 +142,6 @@ namespace AzureDreams
         {
           var spider = spiders[i];
           MoveSpider(spider);
-
           if (spider.Dead)
           {
             spiders.RemoveAt(i);
@@ -136,6 +149,23 @@ namespace AzureDreams
         }
         yield return true;
       }
+    }
+
+    private bool IsTooClose(RoomBounds room, List<RoomBounds> rooms)
+    {
+      var movement = new[]
+      {
+        new { X = -MinRoomDistance, Y = 0 },
+        new { X = MinRoomDistance, Y = 0 },
+        new { X = 0, Y = -MinRoomDistance },
+        new { X = 0, Y = MinRoomDistance },
+      };
+
+      return movement.Any(m =>
+      {
+        var moved = room.Move(m.X, m.Y);
+        return rooms.Any(moved.IntersectsWith);
+      });
     }
 
     private RoomBounds CalculateBoundingBox()
@@ -154,7 +184,7 @@ namespace AzureDreams
         maxC = Math.Max(maxC, c.Column);
       }
 
-      int inflation = 32;
+      int inflation = 16;
       return new RoomBounds
       {
         Bottom = maxR + inflation,
@@ -187,7 +217,7 @@ namespace AzureDreams
       }
     }
 
-    private void AddSpider(List<Spider> spiders, RoomBounds room1, RoomWall room1Wall, RoomBounds room2, RoomWall room2Wall, Pathfinder pathfinder)
+    private bool AddSpider(List<Spider> spiders, RoomBounds room1, RoomWall room1Wall, RoomBounds room2, RoomWall room2Wall, Pathfinder pathfinder)
     {
       var start = GetIndex(room1, room1Wall);
       var end = GetIndex(room2, room2Wall);
@@ -200,6 +230,8 @@ namespace AzureDreams
         dungeon[end].Type = CellType.Door;
         spiders.Add(spider);
       }
+
+      return (spider.Path != null);
     }
 
     private Index GetIndex(RoomBounds room, RoomWall wall)
@@ -227,34 +259,40 @@ namespace AzureDreams
 
     private RoomBounds MoveAwayFrom(RoomBounds bounds)
     {
-      int horzMod, horzDist;
-      int vertMod, vertDist;
+      int x, y;
+      x = bounds.Left;
+      y = bounds.Top;
 
-      horzMod = Percent(0.5) ? -1 : 1;
-      horzDist = RandDistance() * horzMod;
+      int width = RandColumns();
+      int height = RandRows();
 
-      vertMod = Percent(0.5) ? -1 : 1;
-      vertDist = RandDistance() * vertMod;
+      int dx = Percent(0.5) ? -1 : 1;
+      int dy = Percent(0.5) ? -1 : 1;
 
-      var moved = new RoomBounds();
-      moved.Bottom = bounds.Bottom;
-      moved.Left = bounds.Left;
-      moved.Right = bounds.Right;
-      moved.Top = bounds.Top;
-
-      int type = random.Next() % 3;
-      if (type == 0 || (type == 1 || Percent(0.3)))
+      if (Percent(0.5))
       {
-        moved.Bottom += vertDist;
-        moved.Top += vertDist;
+        x += RandDistance() * dx;
+        if (Percent(0.25))
+        {
+          y += RandDistance() * dy;
+        }
       }
-      if (type == 0 || (type == 2 || Percent(0.3)))
+      else
       {
-        moved.Right += horzDist;
-        moved.Left += horzDist;
+        y += RandDistance() * dy;
+        if (Percent(0.1))
+        {
+          x += RandDistance() * dx;
+        }
       }
 
-      return moved;
+      return new RoomBounds
+      {
+        Bottom = y + height,
+        Left = x,
+        Right = x + width,
+        Top = y,
+      };
     }
 
     private void SpawnRoom(RoomBounds bounds)

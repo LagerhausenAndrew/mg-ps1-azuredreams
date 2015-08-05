@@ -54,6 +54,7 @@ namespace AzureDreams
     public Stack<Index> Calculate(Index start, Index goal)
     {
       Reset();
+      resetNeeded = true;
 
       var startNode = environment[start];
       var goalNode = environment[goal];
@@ -162,8 +163,6 @@ namespace AzureDreams
       {
         kvp.Value.Reset();
       }
-
-      resetNeeded = true;
     }
   }
 }
