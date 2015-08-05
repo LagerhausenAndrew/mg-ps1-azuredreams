@@ -41,8 +41,8 @@
   <ItemGroup>
     <Compile Include="Generator\Dungeon.cs" />
     <Compile Include="Generator\Index.cs" />
-    <Compile Include="Pathfinding\Pathfinder.cs" />
-    <Compile Include="Generator\RoomWall.cs" />
+    <Compile Include="Generator\SpiderAction.cs" />
+    <Compile Include="Generator\SpiderActionType.cs" />
     <Compile Include="Grid\Cell.cs" />
     <Compile Include="Grid\CellType.cs" />
     <Compile Include="Generator\Direction.cs" />

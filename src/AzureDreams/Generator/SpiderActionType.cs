@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 
 namespace AzureDreams
 {
-  public enum RoomWall
+  public enum SpiderActionType
   {
-    Left,
-    Top,
-    Right,
-    Bottom,
+    Nothing,
+    GenerateRoom,
+    Turn,
   }
 }

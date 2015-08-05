@@ -8,13 +8,6 @@ namespace AzureDreams
   public class RoomBounds
   {
     public int Left, Top, Right, Bottom;
-    public readonly List<RoomWall> Walls = new List<RoomWall>
-    {
-      RoomWall.Bottom,
-      RoomWall.Left,
-      RoomWall.Right,
-      RoomWall.Top,
-    };
 
     public bool Contains(Index index)
     {
@@ -53,6 +46,17 @@ namespace AzureDreams
         Left = Left + dx,
         Right = Right + dx,
         Top = Top + dy,
+      };
+    }
+
+    public RoomBounds Inflate(int dx, int dy)
+    {
+      return new RoomBounds
+      {
+        Bottom = Bottom + dy,
+        Left = Left - dx,
+        Right = Right + dx,
+        Top = Top - dy,
       };
     }
 

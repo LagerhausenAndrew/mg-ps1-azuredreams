@@ -8,6 +8,28 @@ namespace AzureDreams
 {
   internal static class Extensions
   {
+    public static IEnumerable<T> Except<T>(this IEnumerable<T> items, T value, IEqualityComparer<T> comparer = null)
+    {
+      if (comparer == null)
+      {
+        comparer = EqualityComparer<T>.Default;
+      }
+
+      foreach (T item in items)
+      {
+        if (comparer.Equals(item, value))
+        {
+          continue;
+        }
+        yield return item;
+      }
+    }
+
+    public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> items, Random random)
+    {
+      return items.OrderBy(v => random.Next());
+    }
+
     public static T Fetch<T>(this IList<T> list, Random random)
     {
       int index = random.Next(list.Count);

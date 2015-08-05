@@ -5,9 +5,15 @@ using System.Text;
 
 namespace AzureDreams
 {
-  public class Spider
+  public class Spider : IDungeonItem
   {
-    public bool Dead { get; set; }
-    public Stack<Index> Path { get; set; }
+    public Direction Direction;
+    public bool Kill = false;
+
+    public double ItersWithoutTurning = 0;
+    public double ItersWithoutCreatingRoom = 0;
+
+    public int Row { get; set; }
+    public int Column { get; set; }
   }
 }
