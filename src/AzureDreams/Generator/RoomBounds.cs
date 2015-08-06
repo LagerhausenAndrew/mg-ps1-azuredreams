@@ -38,6 +38,34 @@ namespace AzureDreams
       }
     }
 
+    public IEnumerable<RoomBoundsWall> Walls
+    {
+      get
+      {
+        var walls = new RoomBoundsWall[4];
+        List<Index>
+          west = new List<Index>(),
+          east = new List<Index>(),
+          north = new List<Index>(),
+          south = new List<Index>();
+
+        foreach (var i in Indices)
+        {
+          if (i.Column == Left) west.Add(i);
+          if (i.Column == Right) east.Add(i);
+          if (i.Row == Top) north.Add(i);
+          if (i.Row == Bottom) south.Add(i);
+        }
+
+        walls[0] = new RoomBoundsWall(this, Direction.West, west);
+        walls[1] = new RoomBoundsWall(this, Direction.East, east);
+        walls[2] = new RoomBoundsWall(this, Direction.North, north);
+        walls[3] = new RoomBoundsWall(this, Direction.South, south);
+
+        return walls;
+      }
+    }
+
     public RoomBounds Move(int dx, int dy)
     {
       return new RoomBounds

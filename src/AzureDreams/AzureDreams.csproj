@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="Generator\Dungeon.cs" />
     <Compile Include="Generator\Index.cs" />
+    <Compile Include="Generator\RoomBoundsWall.cs" />
     <Compile Include="Generator\SpiderAction.cs" />
     <Compile Include="Generator\SpiderActionType.cs" />
     <Compile Include="Grid\Cell.cs" />

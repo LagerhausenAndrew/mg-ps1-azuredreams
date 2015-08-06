@@ -71,6 +71,9 @@ namespace AzureDreams
       // spawn x number of spiders, and have each one take up a room slot
       SpawnSpidersForRoom(bounds, spiders, ref availableRoomCount);
 
+      // yield back
+      yield return true;
+
       // as long as we have spiders, then keep going
       while (spiders.Count > 0)
       {
@@ -112,7 +115,7 @@ namespace AzureDreams
                 for (int attempts = 10; !validRoom && attempts > 0; --attempts)
                 {
                   room = CreateBoundsFromWall(spider);
-                  validRoom = !inflated.Any(r => r.IntersectsWith(room));
+                  validRoom = (!inflated.Any(room.IntersectsWith) && !room.Indices.Any(dungeon.Exists));
                 }
 
                 if (validRoom)
@@ -130,36 +133,71 @@ namespace AzureDreams
                   // spawn spiders for the room excluding the direction we came in
                   SpawnSpidersForRoom(room, spiders, ref availableRoomCount, sOpposite[spider.Direction]);
                 }
+                else
+                {
+                  CreateFloor(spider, cell);
+                }
 
                 break;
               }
             case SpiderActionType.Nothing:
               {
-                // generate a floor if the cell is null
-                if (cell == null)
-                {
-                  var floor = new Cell(spider.Row, spider.Column);
-                  floor.Type = CellType.Floor;
-                  dungeon.Add(floor);
-                }
+                CreateFloor(spider, cell);
                 break;
               }
             case SpiderActionType.Turn:
               {
+                // reset the turn count
+                spider.ItersWithoutTurning = 0;
+
+                // create a floor here
+                CreateFloor(spider, cell);
+
                 // turn the spider
                 var node = sLoop.Find(spider.Direction);
                 if (Percent(0.5))
                 {
-                  spider.Direction = node.Next();
+                  spider.Direction = node.Next().Value;
                 }
                 else
                 {
-                  spider.Direction = node.Previous();
+                  spider.Direction = node.Previous().Value;
                 }
                 break;
               }
           }
         }
+
+        // all the spiders died, but we didn't create enough rooms!
+        if (spiders.Count == 0 && rooms.Count < roomCount)
+        {
+          // retrieve all the walls that still have all of their cells available, and then randomly
+          // choose one of them
+          var wall = rooms
+            .SelectMany(r => r.Walls.Where(w => w.Indices.All(i => dungeon[i].Type == CellType.Wall)))
+            .Shuffle(random)
+            .FirstOrDefault();
+          if (wall != null)
+          {
+            // since we're creating a spider, take a room slot
+            --availableRoomCount;
+            spiders.Add(CreateSpiderOnWall(wall.Parent, sOpposite[wall.Wall]));
+          }
+        }
+
+        // yield back
+        yield return true;
+      }
+    }
+
+    private void CreateFloor(Spider spider, Cell cell)
+    {
+      // generate a floor if the cell is null
+      if (cell == null)
+      {
+        var floor = new Cell(spider.Row, spider.Column);
+        floor.Type = CellType.Floor;
+        dungeon.Add(floor);
       }
     }
 
@@ -193,6 +231,10 @@ namespace AzureDreams
         {
           // the spider has moved to an occupied cell. We need to kill it and move on.
           spider.Kill = true;
+          if (cell.Type == CellType.Wall && !cell.IsCorner)
+          {
+            cell.Type = CellType.Door;
+          }
         }
         else
         {
@@ -343,15 +385,48 @@ namespace AzureDreams
       int columns = RandColumns();
       int rows = RandRows();
 
-      switch (spider.Direction)
+      var direction = spider.Direction;
+      switch (direction)
       {
         case Direction.West:
         case Direction.East:
           {
-            bounds.Top = spider.Row;
-            bounds.Bottom = spider.Row + rows;
+            int halfRows = rows / 2;
+            bounds.Top = spider.Row - halfRows;
+            bounds.Bottom = spider.Row + (rows - halfRows);
+            if (direction == Direction.West)
+            {
+              bounds.Right = spider.Column;
+              bounds.Left = bounds.Right - columns;
+            }
+            else
+            {
+              bounds.Left = spider.Column;
+              bounds.Right = bounds.Left + columns;
+            }
+            break;
+          }
+        case Direction.North:
+        case Direction.South:
+          {
+            int halfColumns = columns / 2;
+            bounds.Left = spider.Column - halfColumns;
+            bounds.Right = spider.Column + (columns - halfColumns);
+            if (direction == Direction.North)
+            {
+              bounds.Bottom = spider.Row;
+              bounds.Top = bounds.Bottom - rows;
+            }
+            else
+            {
+              bounds.Top = spider.Row;
+              bounds.Bottom = bounds.Top + rows;
+            }
+            break;
           }
       }
+
+      return bounds;
     }
 
     private RoomBounds CreateBoundsFromCenter(int centerColumn, int centerRow, int columns, int rows)
